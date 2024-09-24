@@ -1,0 +1,54 @@
+import pandas as pd
+import os
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+data=pd.read_csv("C:/Users/shrav/Downloads/traffic_data - Copy.csv")
+data
+class TrafficFlowPredictor:
+    def __init__(self, data_path):
+        self.data = pd.read_csv(data_path)
+        self.models = {
+            'Logistic Regression': LogisticRegression(),
+            'KNeighbors Classifier': KNeighborsClassifier(),
+            'Random Forest Classifier': RandomForestClassifier()
+        }
+        self.X = None
+        self.y = None
+        self.best_model = None
+        self.best_accuracy = 0
+
+    def preprocess_data(self):
+        self.X = self.data[['intersection_id', 'vehicle_count', 'light_timing']]
+        self.y = self.data['traffic_density']
+        
+        self.X = pd.get_dummies(self.X, columns=['intersection_id', 'light_timing'], drop_first=True)
+
+        scaler = StandardScaler()
+        self.X = scaler.fit_transform(self.X)
+
+    def train_and_evaluate(self):
+        X_train, X_test, y_train, y_test = train_test_split(self.X, self.y)
+
+        for model_name, model in self.models.items():
+            model.fit(X_train, y_train)
+            predictions = model.predict(X_test)
+            accuracy = accuracy_score(y_test, predictions)
+            print(f"{model_name} Accuracy: {accuracy:.2f}")
+
+            if accuracy > self.best_accuracy:
+                self.best_accuracy = accuracy
+                self.best_model = model_name
+
+    def get_best_model(self):
+        return self.best_model, self.best_accuracy
+
+if __name__ == "__main__":
+    predictor = TrafficFlowPredictor("C:/Users/shrav/Downloads/traffic_data - Copy.csv")
+    predictor.preprocess_data()
+    predictor.train_and_evaluate()
+    best_model, best_accuracy = predictor.get_best_model()
+    print(f"\nBest Model: {best_model} with Accuracy: {best_accuracy:.2f}")
